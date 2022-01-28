@@ -9,7 +9,6 @@ This package is an improved version of [x/image/tiff](https://github.com/golang/
 
 * Skip check IFD tags order.
 * Read/write support for JPEG compressed images(Compression 7).
-* Read/write support for the YCbCr color model in JPEG compression with single segment.
 
 ## Background
 

@@ -421,8 +421,6 @@ func (d *decoder) decode(dst image.Image, xmin, ymin, xmax, ymax int) error {
 			}
 			copy(img.Pix[min:max], d.buf[i0:i1])
 		}
-	case mYCbCr:
-		return UnsupportedError("color model YCbCr not in JPEG compression")
 
 	}
 
@@ -452,14 +450,6 @@ func (d *decoder) decodeJPEG(dst image.Image, xmin, ymin, xmax, ymax int) (image
 		}
 	case mCMYK:
 		img = dst.(*image.CMYK)
-	case mYCbCr:
-		// only support for single segment.
-		if dst.Bounds() == d.tmp.Bounds() {
-			dst = d.tmp
-		} else {
-			return nil, UnsupportedError("color model YCbCr with multiple segments in JPEG compression")
-		}
-		return dst, nil
 	}
 
 	for y := 0; y+ymin < rMaxY; y++ {
@@ -611,11 +601,13 @@ func newDecoder(r io.Reader) (*decoder, error) {
 		}
 		d.config.ColorModel = color.CMYKModel
 	case pYCbCr:
-		d.mode = mYCbCr
+		// image.YCbCr doesn't have Set method, use image.RGBA instead.
+		d.mode = mRGBA
 		if d.bpp == 16 {
-			return nil, UnsupportedError(fmt.Sprintf("YCbCr BitsPerSample of %v", d.bpp))
+			d.config.ColorModel = color.RGBA64Model
+		} else {
+			d.config.ColorModel = color.RGBAModel
 		}
-		d.config.ColorModel = color.YCbCrModel
 
 	default:
 		return nil, UnsupportedError("color model")
@@ -722,8 +714,6 @@ func Decode(r io.Reader) (img image.Image, err error) {
 		}
 	case mCMYK:
 		img = image.NewCMYK(imgRect)
-	case mYCbCr:
-		img = image.NewYCbCr(imgRect, 0)
 	}
 
 	// According to the spec, JPEGTables is an optional field. The purpose of it is to
@@ -802,7 +792,6 @@ func Decode(r io.Reader) (img image.Image, err error) {
 						return nil, err
 					}
 					// Write JPEG image segment to buffer without SOI marker.
-					// When this is done, buffer data should be a full JPEG format data.
 					buf.Write(b[2:])
 					d.tmp, err = jpeg.Decode(&buf)
 					if err != nil {
