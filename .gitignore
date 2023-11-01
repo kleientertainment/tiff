@@ -4,6 +4,3 @@
 
 # VSCode 
 .vscode/*
-
-go.mod
-go.sum

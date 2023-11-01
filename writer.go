@@ -313,6 +313,9 @@ type Options struct {
 	// types of images and compressors. For example, it works well for
 	// photos with Deflate compression.
 	Predictor bool
+
+	xResolution uint32
+	yResolution uint32
 }
 
 type discard struct{}
@@ -332,6 +335,9 @@ func Encode(w io.Writer, m image.Image, opt *Options) error {
 
 	compression := uint32(cNone)
 	predictor := false
+	xResolution := uint32(72)
+	yResolution := uint32(72)
+
 	if opt != nil {
 		compression = opt.Compression.specValue()
 		// The TIFF 6.0 spec (June,1992) says the predictor field is only to be used with LZW. (See page 64).
@@ -339,6 +345,14 @@ func Encode(w io.Writer, m image.Image, opt *Options) error {
 		// This makes sense as Deflate is supposedly the successor to LWZ.
 		// Also both PNG and PDF use Deflate with predictors.
 		predictor = opt.Predictor && compression == cLZW || compression == cDeflate
+
+		if opt.xResolution != 0 {
+			xResolution = opt.xResolution
+		}
+
+		if opt.yResolution != 0 {
+			yResolution = opt.yResolution
+		}
 	}
 
 	_, err := io.WriteString(w, leHeader)
@@ -492,8 +506,8 @@ func Encode(w io.Writer, m image.Image, opt *Options) error {
 		{tStripByteCounts, dtLong, []uint32{uint32(imageLen)}},
 		// There is currently no support for storing the image
 		// resolution, so give a bogus value of 72x72 dpi.
-		{tXResolution, dtRational, []uint32{72, 1}},
-		{tYResolution, dtRational, []uint32{72, 1}},
+		{tXResolution, dtRational, []uint32{xResolution, 1}},
+		{tYResolution, dtRational, []uint32{yResolution, 1}},
 		{tResolutionUnit, dtShort, []uint32{resPerInch}},
 	}
 	if pr != prNone {
