@@ -314,8 +314,8 @@ type Options struct {
 	// photos with Deflate compression.
 	Predictor bool
 
-	xResolution uint32
-	yResolution uint32
+	XResolution uint32
+	YResolution uint32
 }
 
 type discard struct{}
@@ -346,12 +346,12 @@ func Encode(w io.Writer, m image.Image, opt *Options) error {
 		// Also both PNG and PDF use Deflate with predictors.
 		predictor = opt.Predictor && compression == cLZW || compression == cDeflate
 
-		if opt.xResolution != 0 {
-			xResolution = opt.xResolution
+		if opt.XResolution != 0 {
+			xResolution = opt.XResolution
 		}
 
-		if opt.yResolution != 0 {
-			yResolution = opt.yResolution
+		if opt.XResolution != 0 {
+			yResolution = opt.YResolution
 		}
 	}
 
